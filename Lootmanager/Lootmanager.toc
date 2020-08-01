@@ -1,0 +1,7 @@
+## Interface: 11305
+## Title: Lootmanager
+## Notes: Simple loot management for wow classic
+## Author: Bmk
+## Version: 0.0.1
+
+Lootmanager.lua
