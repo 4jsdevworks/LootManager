@@ -1,18 +1,17 @@
-Lootmanager = LibStub("AceAddon-3.0"):NewAddon("Lootmanager", "AceConsole-3.0", "AceEvent-3.0")
-
+Lootmanager = LibStub("AceAddon-3.0"):NewAddon("Lootmanager", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
 local options = {
     name = "Lootmanager",
     handler = Lootmanager,
     type = "group",
     args = {
-        msg = {
+        masterLooter = {
             type = "input",
-            name = "Message",
-            desc = "The message to be displayed when you get home.",
-            usage = "<Your message>",
-            get = "GetMessage",
-            set = "SetMessage",
+            name = "Master Looter",
+            desc = "The name of the master looter in the raid",
+            usage = "<player name>",
+            get = "GetMasterLooter",
+            set = "SetMasterLooter",
         },
         showInChat = {
             type = "toggle",
@@ -33,7 +32,7 @@ local options = {
 
 local defaults = {
     profile =  {
-        message = "Welcome Home!",
+        masterlooter = UnitName("player"),
         showInChat = true,
         showOnScreen = true,
     },
@@ -45,15 +44,14 @@ function Lootmanager:OnInitialize()
 
     LibStub("AceConfig-3.0"):RegisterOptionsTable("Lootmanager", options)
     self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Lootmanager", "Lootmanager")
-    self:RegisterChatCommand("wh", "ChatCommand")
+    self:RegisterChatCommand("lm", "ChatCommand")
     self:RegisterChatCommand("Lootmanager", "ChatCommand")
-    
+    self:RegisterChatCommand("st", "StartTimer")
+        
     self.Print("Lootmanager Registering Events")
     -- list found here: https://wowwiki.fandom.com/wiki/Events/Loot
-    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "ZoneChange")
     self:RegisterEvent("PLAYER_REGEN_DISABLED", "CombatStart")
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "CombatStop")
-   
     self.Print("Lootmanager Loaded")
 end
 
@@ -62,40 +60,28 @@ function Lootmanager:CombatStart()
 end
 
 function Lootmanager:CombatStop()
-    self.Print("Combat Stop")
-end
-
-function Lootmanager:ZoneChange()
-    if GetBindLocation() == GetZoneText() then
-        if self.db.profile.showInChat then
-            self:Print(self.db.profile.message)
-            self:Print("Switching to master loot")
-            SetLootMethod("master", "bmk");
-        end
-
-        if self.db.profile.showOnScreen then
-            UIErrorsFrame:AddMessage(self.db.profile.message, 1.0, 1.0, 1.0, 5.0)
-        end
-    else
-        self:Print("Switching to group loot")
-        SetLootMethod("group");
-    end
+    self:Print("Switching to group loot")
+    SetLootMethod("group");
 end
 
 function Lootmanager:ChatCommand(input)
     if not input or input:trim() == "" then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
     else
-        LibStub("AceConfigCmd-3.0"):HandleCommand("wh", "Lootmanager", input)
+        LibStub("AceConfigCmd-3.0"):HandleCommand("lm", "Lootmanager", input)
     end
 end
 
-function Lootmanager:GetMessage(info)
-    return self.db.profile.message
+function Lootmanager:StartBoss()
+    SetLootMethod("master", self.db.profile.masterLooter);
 end
 
-function Lootmanager:SetMessage(info, newValue)
-    self.db.profile.message = newValue
+function Lootmanager:GetMasterLooter(info)
+    return self.db.profile.masterLooter
+end
+
+function Lootmanager:SetMasterLooter(info, newValue)
+    self.db.profile.masterlooter = newValue
 end
 
 function Lootmanager:IsShowInChat(info)
@@ -112,4 +98,20 @@ end
 
 function Lootmanager:ToggleShowOnScreen(info, value)
     self.db.profile.showOnScreen = value
+end
+
+function Lootmanager:StartTimer()
+    self.Print("10 second timer")
+    self.timerCount = 10
+    self.testTimer = self:ScheduleRepeatingTimer("TimerTick", 1)
+end
+
+function Lootmanager:TimerTick()
+    self.timerCount = self.timerCount - 1
+    self.Print(self.timerCount)
+    
+    if self.timerCount == 0 then
+        self.Print("Timer Complete")
+        self:CancelTimer(self.testTimer)
+    end
 end
