@@ -69,11 +69,16 @@ function Lootmanager:ZoneChange()
     if GetBindLocation() == GetZoneText() then
         if self.db.profile.showInChat then
             self:Print(self.db.profile.message)
+            self:Print("Switching to master loot")
+            SetLootMethod("master", "bmk");
         end
 
         if self.db.profile.showOnScreen then
             UIErrorsFrame:AddMessage(self.db.profile.message, 1.0, 1.0, 1.0, 5.0)
         end
+    else
+        self:Print("Switching to group loot")
+        SetLootMethod("group");
     end
 end
 
