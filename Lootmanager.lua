@@ -32,7 +32,7 @@ local options = {
 
 local defaults = {
     profile =  {
-        masterlooter = UnitName("player"),
+        masterLooter = UnitName("player"),
         showInChat = true,
         showOnScreen = true,
     },
@@ -47,6 +47,7 @@ function Lootmanager:OnInitialize()
     self:RegisterChatCommand("lm", "ChatCommand")
     self:RegisterChatCommand("Lootmanager", "ChatCommand")
     self:RegisterChatCommand("st", "StartTimer")
+    self:RegisterChatCommand("boss", "StartBoss")
         
     self.Print("Lootmanager Registering Events")
     -- list found here: https://wowwiki.fandom.com/wiki/Events/Loot
@@ -56,12 +57,14 @@ function Lootmanager:OnInitialize()
 end
 
 function Lootmanager:CombatStart()
-    self.Print("Combat Start")
+    -- placeholder for starting combat
 end
 
 function Lootmanager:CombatStop()
-    self:Print("Switching to group loot")
-    SetLootMethod("group");
+    if GetLootMethod() ~= "group" then
+        SendChatMessage("Switching back to group loot", "RAID_WARNING", nil, nil)
+        SetLootMethod("group");
+    end
 end
 
 function Lootmanager:ChatCommand(input)
@@ -73,7 +76,11 @@ function Lootmanager:ChatCommand(input)
 end
 
 function Lootmanager:StartBoss()
-    SetLootMethod("master", self.db.profile.masterLooter);
+    if GetLootMethod() ~= "master" then
+        SetLootMethod("master", self.db.profile.masterLooter);
+        SendChatMessage("Switching to master loot, starting Boss in 10 seconds", "RAID_WARNING", nil, nil)
+        self:StartTimer(10)    
+    end
 end
 
 function Lootmanager:GetMasterLooter(info)
@@ -81,7 +88,7 @@ function Lootmanager:GetMasterLooter(info)
 end
 
 function Lootmanager:SetMasterLooter(info, newValue)
-    self.db.profile.masterlooter = newValue
+    self.db.profile.masterLooter = newValue
 end
 
 function Lootmanager:IsShowInChat(info)
@@ -100,18 +107,18 @@ function Lootmanager:ToggleShowOnScreen(info, value)
     self.db.profile.showOnScreen = value
 end
 
-function Lootmanager:StartTimer()
-    self.Print("10 second timer")
-    self.timerCount = 10
+function Lootmanager:StartTimer(timerLength)
+    self.timerCount = timerLength
     self.testTimer = self:ScheduleRepeatingTimer("TimerTick", 1)
 end
 
 function Lootmanager:TimerTick()
     self.timerCount = self.timerCount - 1
-    self.Print(self.timerCount)
+
+    local message = self.timerCount
+    SendChatMessage(message, "RAID_WARNING", nil, nil)
     
     if self.timerCount == 0 then
-        self.Print("Timer Complete")
         self:CancelTimer(self.testTimer)
     end
 end
